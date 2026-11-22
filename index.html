@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pickalbatros Portofino (Villaggio &amp; Vita) | Offizielle Interaktive Resort-Karte</title>
+  <meta name="description" content="Interaktive digitale Resort-Karte auf Basis des offiziellen Pickalbatros Portofino Lageplans (Nr. 1–51). Alle Restaurants, Bars, Pools, Aqua Park, Spielplätze, Öffnungszeiten & Filter." />
+  <link rel="stylesheet" href="./index.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Top Floating Header & Filter Bar -->
+    <header class="top-nav" id="top-nav">
+      <div class="top-nav-main">
+        <div class="brand-lockup" id="brand-reset-btn" role="button" tabindex="0" title="Ganze Karte zentrieren">
+          <div class="brand-emblem">
+            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+              <circle cx="14" cy="14" r="12.5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <path d="M14 4.5C15.8 9.2 18.8 12.2 23.5 14C18.8 15.8 15.8 18.8 14 23.5C12.2 18.8 9.2 15.8 4.5 14C9.2 12.2 12.2 9.2 14 4.5Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="brand-titles">
+            <span class="brand-eyebrow">Offizieller Lageplan · Nr. 1–51</span>
+            <h1 class="brand-title">Portofino <em>Marsa Alam</em></h1>
+          </div>
+        </div>
+
+        <div class="search-and-controls">
+          <div class="search-box" id="search-container">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+            <input
+              type="search"
+              id="poi-search-input"
+              class="search-input"
+              placeholder="Nr. (1–51), Restaurant, Eis, Kids, Pool..."
+              autocomplete="off"
+              aria-label="Resort durchsuchen"
+            />
+            <button type="button" id="clear-search-btn" class="clear-search-btn hidden" aria-label="Suche löschen">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+          <div class="status-controls">
+            <button type="button" id="open-now-toggle" class="status-pill" aria-pressed="false" title="Nur aktuell geöffnete Orte anzeigen">
+              <span class="live-dot"></span>
+              <span class="status-label">Jetzt offen</span>
+            </button>
+
+            <button type="button" id="heated-map-toggle" class="heated-pill" aria-pressed="false" title="Beheizte Winter-Pools auf der offiziellen Karte einblenden">
+              <span>🔥 Beheizt</span>
+            </button>
+
+            <button type="button" id="time-sim-btn" class="time-badge" title="Uhrzeit simulieren">
+              <svg viewBox="0 0 16 16" fill="none" class="clock-icon">
+                <circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 4.75V8l2.25 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span id="current-time-display">12:45</span>
+            </button>
+
+            <button type="button" id="dine-around-info-btn" class="info-icon-btn" title="All-Inclusive &amp; Zimmerblöcke Guide">
+              <svg viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M10 9v4.5M10 6.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Simulator Popover -->
+      <div id="time-sim-popover" class="time-popover hidden" role="dialog" aria-label="Tageszeit simulieren">
+        <div class="time-popover-header">
+          <span class="time-popover-title">Resort-Uhrzeit simulieren</span>
+          <button type="button" id="time-reset-live-btn" class="time-live-link">Live-Uhrzeit</button>
+        </div>
+        <div class="time-slider-row">
+          <input type="range" id="time-slider" min="0" max="1435" step="15" value="765" aria-label="Uhrzeit wählen" />
+          <span id="time-slider-value" class="time-mono-readout">12:45 Uhr</span>
+        </div>
+        <div class="time-presets">
+          <button type="button" class="time-preset-chip" data-minutes="510">🌅 08:30 Frühstück</button>
+          <button type="button" class="time-preset-chip" data-minutes="720">☀️ 12:00 Aqua Park</button>
+          <button type="button" class="time-preset-chip" data-minutes="810">🍔 13:30 Mittag/Snacks</button>
+          <button type="button" class="time-preset-chip" data-minutes="960">🍦 16:00 Eis &amp; Kids</button>
+          <button type="button" class="time-preset-chip" data-minutes="1170">🌙 19:30 Dinner</button>
+          <button type="button" class="time-preset-chip" data-minutes="1290">🎭 21:30 Show/Bars</button>
+        </div>
+      </div>
+
+      <!-- Horizontal Scrollable Category Filter Bar -->
+      <nav class="filter-bar" id="category-filter-bar" aria-label="Kategorien filtern">
+        <button type="button" class="filter-chip active" data-category="all">
+          <span class="chip-dot dot-all"></span>
+          <span>Alle (1–51)</span>
+          <span class="chip-count" id="count-all">55</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="restaurants">
+          <span class="chip-dot dot-restaurants"></span>
+          <span>🍴 Restaurants (1–7)</span>
+          <span class="chip-count" id="count-restaurants">7</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="snacks">
+          <span class="chip-dot dot-snacks"></span>
+          <span>🍕 Snacks &amp; Bakery (28–31)</span>
+          <span class="chip-count" id="count-snacks">4</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="bars">
+          <span class="chip-dot dot-bars"></span>
+          <span>🍹 Bars &amp; Eis (8–22)</span>
+          <span class="chip-count" id="count-bars">18</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="pools">
+          <span class="chip-dot dot-pools"></span>
+          <span>💦 Aqua Park &amp; Pools (23–27)</span>
+          <span class="chip-count" id="count-pools">5</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="kids">
+          <span class="chip-dot dot-kids"></span>
+          <span>🎠 Kids &amp; Spielplatz (38, 49, 50)</span>
+          <span class="chip-count" id="count-kids">4</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="sport">
+          <span class="chip-dot dot-sport"></span>
+          <span>⚽ Sport, Riff &amp; Spa (32–48)</span>
+          <span class="chip-count" id="count-sport">12</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="service">
+          <span class="chip-dot dot-service"></span>
+          <span>🛎️ Rezeption &amp; Service</span>
+          <span class="chip-count" id="count-service">5</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Workspace: Official Map Canvas + Responsive Sidebar/Sheet -->
+    <main class="workspace">
+      <section class="map-viewport" id="map-viewport" aria-label="Offizielle Karte des Pickalbatros Portofino Resorts">
+        <div class="map-stage" id="map-stage">
+          <!-- Official Pickalbatros Portofino Map Image (810 x 1030 high-res cropped canvas) -->
+          <img
+            id="official-map-img"
+            class="official-map-img"
+            src="./official_map_cropped.jpg"
+            width="810"
+            height="1030"
+            alt="Offizieller Lageplan Pickalbatros Villaggio &amp; Vita Resort Portofino Marsa Alam"
+            draggable="false"
+          />
+
+          <!-- Interactive Pin Overlay Layer (1:1 aligned with numbers 1 to 51 on official map) -->
+          <div id="map-markers-layer" class="map-markers-layer" aria-live="polite"></div>
+        </div>
+
+        <!-- Floating Map Zoom Controls -->
+        <div class="map-controls" aria-label="Kartensteuerung">
+          <button type="button" id="zoom-in-btn" class="map-ctrl-btn" aria-label="Vergrößern" title="Vergrößern (+)">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button type="button" id="zoom-out-btn" class="map-ctrl-btn" aria-label="Verkleinern" title="Verkleinern (-)">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button type="button" id="zoom-reset-btn" class="map-ctrl-btn" aria-label="Ganze Karte anzeigen" title="Ganze Karte anzeigen">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Quick Zone Jump Bar -->
+        <div class="zone-jump-bar" aria-label="Schnellwahl Resort-Zonen">
+          <button type="button" class="zone-btn active" data-zone="overview">Gesamtkarte</button>
+          <button type="button" class="zone-btn" data-zone="aquapark">Aqua Park (23–30)</button>
+          <button type="button" class="zone-btn" data-zone="center">Zentrum &amp; Steg (5–11, 41)</button>
+          <button type="button" class="zone-btn" data-zone="south">Villaggio Süd (1–3, 12–15)</button>
+          <button type="button" class="zone-btn" data-zone="north">Vita Nord (18, 21, 48, 51)</button>
+          <button type="button" class="zone-btn" data-zone="sports">Sportplätze (32–36)</button>
+        </div>
+      </section>
+
+      <!-- Responsive Directory & Detail Drawer (Right Sidebar on Desktop / Draggable Bottom Sheet on Mobile) -->
+      <aside class="inspector-panel" id="inspector-panel" aria-label="Offizielle Legende Nr. 1–51 und Details">
+        <div class="sheet-handle-bar" id="sheet-handle-bar" role="button" tabindex="0" aria-label="Liste ein- oder ausklappen">
+          <span class="sheet-grabber"></span>
+          <div class="sheet-summary-row">
+            <span id="sheet-summary-text" class="sheet-summary-title">Offizielle Legende (Nr. 1–51)</span>
+            <span class="sheet-expand-hint" id="sheet-expand-hint">Legende öffnen ↑</span>
+          </div>
+        </div>
+
+        <!-- View 1: Official Numbered Directory List (1–51) -->
+        <div id="directory-view" class="panel-view">
+          <div class="directory-header">
+            <div>
+              <h2 class="directory-title" id="directory-heading">Offizielle Legende (1–51)</h2>
+              <p class="directory-subtitle" id="directory-subheading">Tippe auf eine Nummer auf der Karte oder in der Liste</p>
+            </div>
+            <button type="button" id="meal-schedule-btn" class="schedule-quick-btn" title="Essenszeiten, Zimmerblöcke &amp; Shuttle">
+              <span>Guide &amp; Zeiten</span>
+            </button>
+          </div>
+
+          <div id="poi-list-container" class="poi-list" role="list"></div>
+        </div>
+
+        <!-- View 2: Selected POI Detail Inspector -->
+        <div id="detail-view" class="panel-view hidden" aria-live="polite">
+          <div class="detail-topbar">
+            <button type="button" id="back-to-list-btn" class="back-btn">
+              <svg viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Alle Nummern (1–51)</span>
+            </button>
+            <div class="detail-nav-arrows">
+              <button type="button" id="prev-poi-btn" class="icon-circle-btn" aria-label="Vorherige Nummer">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" id="next-poi-btn" class="icon-circle-btn" aria-label="Nächste Nummer">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="poi-detail-content" class="poi-detail-content"></div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Modal: All-Inclusive, Room Blocks (1000-6000) & Shuttle Bus Guide -->
+    <div id="info-modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <span class="brand-eyebrow">Offizieller Pickalbatros Portofino Guide</span>
+            <h2 id="modal-title" class="modal-title">All-Inclusive, Zimmerblöcke &amp; Shuttle-Linie</h2>
+          </div>
+          <button type="button" id="close-modal-btn" class="icon-circle-btn" aria-label="Schließen">
+            <svg viewBox="0 0 18 18" fill="none"><path d="M4.5 4.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <h3 class="modal-section-title" style="margin-top:0;">Farbcodes der Zimmerblöcke (1000 – 6000) auf der Karte</h3>
+          <div class="room-blocks-grid">
+            <div class="room-block-chip"><span class="rb-dot" style="background:#2d4a8a;"></span><strong>B. 1000 (Dunkelblau):</strong> Vita Nord-Küste &amp; Meerblick-Bungalows (bei Nr. 18, 21, 51)</div>
+            <div class="room-block-chip"><span class="rb-dot" style="background:#8a3d8f;"></span><strong>B. 2000 (Lila):</strong> Obere Garten- &amp; Pool-Zimmer nördlich des Aqua Parks (Haltestellen E, F, G)</div>
+            <div class="room-block-chip"><span class="rb-dot" style="background:#4bb3d4;"></span><strong>B. 3000 (Hellblau):</strong> Zentrale Familien- &amp; Swim-Up-Suiten rund um den Aqua Park (Nr. 23–26)</div>
+            <div class="room-block-chip"><span class="rb-dot" style="background:#e06d2b;"></span><strong>B. 4000 (Orange):</strong> Villaggio Strand- &amp; Pool-Bungalows nahe Beach Club (Nr. 12, 28)</div>
+            <div class="room-block-chip"><span class="rb-dot" style="background:#4b8b3b;"></span><strong>B. 5000 (Grün):</strong> Villaggio Süd-Garten rund um El Khan &amp; Pool Bar 13/14</div>
+            <div class="room-block-chip"><span class="rb-dot" style="background:#b8292f;"></span><strong>B. 6000 (Rot):</strong> Südwestliche Garten-Bungalows bis zum Soprano Restaurant (Nr. 1, Haltestelle A)</div>
+          </div>
+
+          <h3 class="modal-section-title">Rote Shuttle-Bus-Linie (Haltestellen A bis G)</h3>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+            Die rote Linie auf der Karte zeigt den kostenlosen internen <strong>Shuttle-Bus</strong>:
+            <strong>A</strong> (Soprano Nr. 1 / Pool 15) ↔ <strong>B</strong> (El Khan Nr. 3 / Kreuzung) ↔ <strong>C</strong> (Fußballplatz Nr. 32) ↔ <strong>D</strong> (Rezeption Villaggio Nr. 42) ↔ <strong>E</strong> (Rezeption Vita Nr. 51) ↔ <strong>F &amp; G</strong> (Block 2000 &amp; Aqua Park).
+          </p>
+
+          <h3 class="modal-section-title">Kulinarik &amp; Öffnungszeiten im Überblick</h3>
+          <div class="timeline-table">
+            <div class="timeline-row">
+              <span class="timeline-time">05:00 – 07:00</span>
+              <div class="timeline-info"><strong>Frühes Frühstück</strong><span>Nr. 1 Soprano Restaurant</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">07:00 – 10:00</span>
+              <div class="timeline-info"><strong>Frühstücksbuffet</strong><span>Nr. 1 Soprano, Nr. 3 El Khan, Nr. 4 L’Asiatique (East &amp; West), Nr. 28 Beach Club (08–10 Uhr)</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">10:00 – 11:00</span>
+              <div class="timeline-info"><strong>Spätaufsteher-Frühstück</strong><span>Nr. 3 El Khan, Nr. 4 L’Asiatique &amp; Nr. 28 Beach Club</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">10:00 – 22:00</span>
+              <div class="timeline-info"><strong>Eiscreme &amp; Milchshakes</strong><span>Nr. 17 Smoothie Bar (11:00–17:30 Eis &amp; Shakes), Nr. 16 Terrace Bar (11–21 Uhr), Nr. 12 Beach Club &amp; Nr. 21 Columbus Bar (10–12 &amp; 19–22 Uhr)</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">12:30 – 14:30</span>
+              <div class="timeline-info"><strong>Mittagsbuffet</strong><span>Nr. 1 Soprano Restaurant &amp; Nr. 6 Mediterranean Restaurant</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">12:30 – 17:30</span>
+              <div class="timeline-info"><strong>Snacks &amp; Food Courts</strong><span>Nr. 28 Beach Club Snacks, Nr. 29 Snacks Vita (Jetty), Nr. 30 Aqua Park Snacks &amp; Pizzeria</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">18:30 – 21:30</span>
+              <div class="timeline-info"><strong>Abendessen (Buffet &amp; À la Carte)</strong><span>Buffet: Nr. 1 Soprano, Nr. 3 El Khan, Nr. 4 L’Asiatique, Nr. 5 Alfredo, Nr. 6 Mediterranean · À la carte (mit Reservierung): Nr. 2 Shellfish &amp; Nr. 7 Tabliya</span></div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-time">22:00 – 00:00</span>
+              <div class="timeline-info"><strong>Spätes Abendessen (Late Dinner)</strong><span>Nr. 1 Soprano Restaurant &amp; Nr. 6 Mediterranean Restaurant</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
