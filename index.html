@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>Pickalbatros Portofino (Villaggio &amp; Vita) | 1:1 UHD-Resortkarte ohne Punkte (Nr. 1–51 Interaktiv)</title>
+  <title>Pickalbatros Portofino (Villaggio &amp; Vita) | 1:1 UHD-Resortkarte (Ziehbares Popup)</title>
   <style>
     :root {
       --bg-canvas: #ffffff;
@@ -226,11 +226,11 @@
       .info-icon-btn { width: 34px; height: 34px; }
       .map-controls { left: auto; right: 10px; bottom: 145px; }
       .zone-jump-bar { left: 10px; right: 58px; bottom: 92px; transform: none; max-width: none; }
-      .inspector-panel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 75dvh; border-left: none; border-top: 1px solid rgba(22, 36, 43, 0.15); border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(18, 30, 36, 0.22); transform: translateY(calc(75dvh - 78px)); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
-      .inspector-panel.sheet-half { transform: translateY(calc(75dvh - 340px)); }
+      .inspector-panel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 78dvh; border-left: none; border-top: 1px solid rgba(22, 36, 43, 0.15); border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(18, 30, 36, 0.22); transform: translateY(calc(78dvh - 78px)); transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+      .inspector-panel.sheet-half { transform: translateY(calc(78dvh - 340px)); }
       .inspector-panel.sheet-expanded { transform: translateY(0); }
-      .sheet-handle-bar { display: flex; flex-direction: column; align-items: center; padding: 8px 16px 10px; border-bottom: 1px solid var(--border-subtle); cursor: pointer; user-select: none; background: rgba(255, 255, 255, 0.85); }
-      .sheet-grabber { width: 40px; height: 5px; border-radius: 99px; background: rgba(22, 36, 43, 0.22); margin-bottom: 7px; }
+      .sheet-handle-bar { display: flex; flex-direction: column; align-items: center; padding: 10px 16px 10px; border-bottom: 1px solid var(--border-subtle); cursor: ns-resize; user-select: none; touch-action: none; background: rgba(255, 255, 255, 0.92); }
+      .sheet-grabber { width: 44px; height: 5px; border-radius: 99px; background: rgba(22, 36, 43, 0.26); margin-bottom: 7px; }
       .sheet-summary-row { width: 100%; display: flex; align-items: center; justify-content: space-between; }
       .sheet-summary-title { font-size: 13px; font-weight: 700; }
       .sheet-expand-hint { font-size: 11.5px; font-weight: 600; color: var(--accent-primary); }
@@ -1006,15 +1006,17 @@
 
     function setMobileSheetState(targetState) {
       state.mobileSheetState = targetState;
+      dom.inspectorPanel.style.transition = '';
+      dom.inspectorPanel.style.transform = '';
       dom.inspectorPanel.classList.remove('sheet-half', 'sheet-expanded');
       if (targetState === 'half') {
         dom.inspectorPanel.classList.add('sheet-half');
-        dom.sheetExpandHint.textContent = 'Ganz öffnen ↑';
+        dom.sheetExpandHint.textContent = 'Ziehen / Ganz öffnen ↑';
       } else if (targetState === 'expanded') {
         dom.inspectorPanel.classList.add('sheet-expanded');
-        dom.sheetExpandHint.textContent = 'Minimieren ↓';
+        dom.sheetExpandHint.textContent = 'Runterziehen ↓';
       } else {
-        dom.sheetExpandHint.textContent = 'Legende öffnen ↑';
+        dom.sheetExpandHint.textContent = 'Hochziehen ↑';
       }
     }
 
@@ -1094,7 +1096,63 @@
       document.getElementById('prev-poi-btn').addEventListener('click', () => navigateAdjacentPoi(-1));
       document.getElementById('next-poi-btn').addEventListener('click', () => navigateAdjacentPoi(1));
 
+      let sheetDragActive = false, sheetDragStartY = 0, sheetStartTranslateY = 0, sheetWasDragged = false;
+      function getCurrentPanelTranslateY() {
+        const style = window.getComputedStyle(dom.inspectorPanel).transform;
+        if (!style || style === 'none') return 0;
+        const m = style.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,[^,]+,\s*([^)]+)\)/);
+        return m ? parseFloat(m[1]) : 0;
+      }
+      function applySheetDragY(y) {
+        const panelH = dom.inspectorPanel.getBoundingClientRect().height || (window.innerHeight * 0.78);
+        const maxY = Math.max(80, panelH - 78);
+        const clamped = Math.max(0, Math.min(maxY, y));
+        dom.inspectorPanel.style.transition = 'none';
+        dom.inspectorPanel.style.transform = `translateY(${clamped}px)`;
+        if (clamped < panelH * 0.25) {
+          state.mobileSheetState = 'expanded';
+          dom.sheetExpandHint.textContent = 'Runterziehen ↓';
+        } else if (clamped > maxY - 40) {
+          state.mobileSheetState = 'collapsed';
+          dom.sheetExpandHint.textContent = 'Hochziehen ↑';
+        } else {
+          state.mobileSheetState = 'half';
+          dom.sheetExpandHint.textContent = 'Hoch / Runter ziehen ↕';
+        }
+      }
+
+      const startSheetDrag = (clientY) => {
+        if (window.innerWidth > 960) return;
+        sheetDragActive = true;
+        sheetWasDragged = false;
+        sheetDragStartY = clientY;
+        sheetStartTranslateY = getCurrentPanelTranslateY();
+      };
+      const moveSheetDrag = (clientY, ev) => {
+        if (!sheetDragActive) return;
+        const dy = clientY - sheetDragStartY;
+        if (Math.abs(dy) > 4) sheetWasDragged = true;
+        if (ev && ev.cancelable) ev.preventDefault();
+        applySheetDragY(sheetStartTranslateY + dy);
+      };
+      const endSheetDrag = () => {
+        sheetDragActive = false;
+      };
+
+      dom.sheetHandleBar.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) startSheetDrag(e.touches[0].clientY);
+      }, { passive: true });
+      dom.sheetHandleBar.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) moveSheetDrag(e.touches[0].clientY, e);
+      }, { passive: false });
+      dom.sheetHandleBar.addEventListener('touchend', endSheetDrag);
+
+      dom.sheetHandleBar.addEventListener('mousedown', (e) => startSheetDrag(e.clientY));
+      window.addEventListener('mousemove', (e) => moveSheetDrag(e.clientY, null));
+      window.addEventListener('mouseup', endSheetDrag);
+
       dom.sheetHandleBar.addEventListener('click', () => {
+        if (sheetWasDragged) { sheetWasDragged = false; return; }
         if (state.mobileSheetState === 'collapsed') setMobileSheetState('half');
         else if (state.mobileSheetState === 'half') setMobileSheetState('expanded');
         else setMobileSheetState('collapsed');
