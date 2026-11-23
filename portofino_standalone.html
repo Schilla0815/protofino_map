@@ -958,7 +958,10 @@
           initialTy = state.ty;
         } else if (e.touches.length === 0) {
           if (!state.movedDuringTouch && !e.target.closest('.map-pin') && !e.target.closest('.map-controls') && !e.target.closest('.zone-jump-bar')) {
-            if (window.innerWidth <= 960 && state.mobileSheetState === 'expanded') {
+            if (state.selectedPoiId) {
+              closeDetailView();
+              if (window.innerWidth <= 960) setMobileSheetState('collapsed');
+            } else if (window.innerWidth <= 960 && state.mobileSheetState === 'expanded') {
               setMobileSheetState('collapsed');
             }
             const now = Date.now();
@@ -975,22 +978,31 @@
       });
 
       // Mouse drag & wheel zoom for desktop
-      let isMouseDragging = false;
+      let isMouseDragging = false, mouseMoved = false;
       dom.viewport.addEventListener('mousedown', (e) => {
         if (e.target.closest('.map-controls') || e.target.closest('.zone-jump-bar') || e.target.closest('.map-pin')) return;
         isMouseDragging = true;
+        mouseMoved = false;
         startX = e.clientX; startY = e.clientY;
         initialTx = state.tx; initialTy = state.ty;
         dom.viewport.classList.add('is-dragging');
       });
       window.addEventListener('mousemove', (e) => {
         if (!isMouseDragging) return;
-        state.tx = initialTx + (e.clientX - startX);
-        state.ty = initialTy + (e.clientY - startY);
+        const dx = e.clientX - startX, dy = e.clientY - startY;
+        if (Math.hypot(dx, dy) > 4) mouseMoved = true;
+        state.tx = initialTx + dx;
+        state.ty = initialTy + dy;
         clampTranslation();
         applyMapTransform(false);
       });
-      window.addEventListener('mouseup', () => {
+      window.addEventListener('mouseup', (e) => {
+        if (isMouseDragging && !mouseMoved && !e.target.closest('.map-pin') && !e.target.closest('.map-controls') && !e.target.closest('.zone-jump-bar')) {
+          if (state.selectedPoiId) {
+            closeDetailView();
+            if (window.innerWidth <= 960) setMobileSheetState('collapsed');
+          }
+        }
         isMouseDragging = false;
         dom.viewport.classList.remove('is-dragging');
       });
